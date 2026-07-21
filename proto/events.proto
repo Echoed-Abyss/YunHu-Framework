@@ -1,0 +1,135 @@
+syntax = "proto3";
+
+package yunhu.plugin.event;
+
+option java_multiple_files = true;
+option java_package = "com.yunhu.plugin.event";
+option go_package = "yunhu/plugin/event";
+
+// 事件头
+message EventHeader {
+  string event_id = 1;
+  int64 event_time = 2;
+  string event_type = 3;
+  string bot_id = 4;
+}
+
+// 发送者信息
+message Sender {
+  string sender_id = 1;
+  string sender_type = 2;
+  string sender_user_level = 3;
+  string sender_nickname = 4;
+  string sender_avatar_url = 5;
+}
+
+// 聊天对象
+message Chat {
+  string chat_id = 1;
+  string chat_type = 2;
+}
+
+// 消息内容
+message MessageContent {
+  string msg_id = 1;
+  string parent_id = 2;
+  int64 send_time = 3;
+  string chat_id = 4;
+  string chat_type = 5;
+  string content_type = 6;
+  oneof content {
+    TextContent text = 7;
+    ImageContent image = 8;
+    FileContent file = 9;
+    VideoContent video = 10;
+    AudioContent audio = 11;
+    MarkdownContent markdown = 12;
+  }
+  int64 instruction_id = 13;
+  string instruction_name = 14;
+  repeated string at_user_ids = 15;
+}
+
+message TextContent {
+  string text = 1;
+}
+
+message ImageContent {
+  string image_url = 1;
+  string image_name = 2;
+  string image_key = 3;
+  int32 image_width = 4;
+  int32 image_height = 5;
+}
+
+message FileContent {
+  string file_name = 1;
+  string file_url = 2;
+  string file_key = 3;
+  int64 file_size = 4;
+}
+
+message VideoContent {
+  string video_url = 1;
+  int32 video_duration = 2;
+}
+
+message AudioContent {
+  string audio_url = 1;
+  int32 audio_duration = 2;
+}
+
+message MarkdownContent {
+  string text = 1;
+}
+
+// 普通消息事件
+message MessageReceiveEvent {
+  Sender sender = 1;
+  Chat chat = 2;
+  MessageContent message = 3;
+}
+
+// 关注机器人事件
+message BotFollowedEvent {
+  Sender user = 1;
+  int64 follow_time = 2;
+}
+
+// 取消关注机器人事件
+message BotUnfollowedEvent {
+  Sender user = 1;
+  int64 unfollow_time = 2;
+}
+
+// 加入群事件
+message GroupJoinEvent {
+  Sender user = 1;
+  string group_id = 2;
+  int64 join_time = 3;
+  string operator_id = 4;
+}
+
+// 退出群事件
+message GroupLeaveEvent {
+  Sender user = 1;
+  string group_id = 2;
+  int64 leave_time = 3;
+  string operator_id = 4;
+}
+
+// 按钮点击事件
+message ButtonReportEvent {
+  Sender user = 1;
+  Chat chat = 2;
+  string message_id = 3;
+  string button_value = 4;
+  string button_text = 5;
+}
+
+// 快捷菜单事件
+message BotShortcutMenuEvent {
+  Sender user = 1;
+  string menu_id = 2;
+  string menu_name = 3;
+}
