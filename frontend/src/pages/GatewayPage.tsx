@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Card, Table, Tag, Progress, Statistic, Row, Col, Button, Space } from 'antd';
 import { ApiOutlined, ReloadOutlined } from '@ant-design/icons';
 import ReactECharts from 'echarts-for-react';
-import { gatewayApi } from '../../api';
-import type { ApiInfo } from '../../types';
+import { gatewayApi } from '../api';
+import type { ApiInfo } from '../types';
 
 const ApiGateway: React.FC = () => {
   const [apis, setApis] = useState<ApiInfo[]>([]);

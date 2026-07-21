@@ -344,8 +344,8 @@ export class PluginGatewayService implements OnModuleInit {
     );
   }
 
-  private mapContentType(protoType: string): string {
-    const map: Record<string, string> = {
+  private mapContentType(protoType: string): 'text' | 'image' | 'video' | 'file' | 'markdown' | 'html' {
+    const map: Record<string, 'text' | 'image' | 'video' | 'file' | 'markdown' | 'html'> = {
       TEXT: 'text',
       IMAGE: 'image',
       VIDEO: 'video',

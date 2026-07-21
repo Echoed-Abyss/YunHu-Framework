@@ -21,7 +21,7 @@ export interface EditMessageParams {
   msgId: string;
   recvId: string;
   recvType: 'user' | 'group';
-  contentType: 'text' | 'image' | 'file' | 'markdown';
+  contentType: 'text' | 'image' | 'video' | 'file' | 'markdown' | 'html';
   content: any;
 }
 

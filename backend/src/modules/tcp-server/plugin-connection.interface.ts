@@ -1,5 +1,5 @@
 import { Socket } from 'net';
-import { AESCipher } from '../utils/crypto.util';
+import { AESCipher } from '../../common/utils/crypto.util';
 
 export interface PluginConnection {
   socket: Socket;
