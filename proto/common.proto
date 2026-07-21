@@ -1,0 +1,93 @@
+syntax = "proto3";
+
+package yunhu.plugin;
+
+option java_multiple_files = true;
+option java_package = "com.yunhu.plugin";
+option go_package = "yunhu/plugin";
+
+// 消息类型枚举
+enum MessageType {
+  UNKNOWN = 0;
+  HANDSHAKE_REQUEST = 1;
+  HANDSHAKE_RESPONSE = 2;
+  PLUGIN_REQUEST = 3;
+  PLUGIN_RESPONSE = 4;
+  EVENT_PUSH = 5;
+  HEARTBEAT = 6;
+  HEARTBEAT_ACK = 7;
+  ERROR = 8;
+}
+
+// 通用消息包装器
+message Message {
+  MessageType type = 1;
+  bytes payload = 2;
+  int64 timestamp = 3;
+  string request_id = 4;
+}
+
+// 握手请求 - 插件发起
+message HandshakeRequest {
+  string plugin_id = 1;
+  string plugin_name = 2;
+  string plugin_version = 3;
+  string bot_token = 4;
+  bytes rsa_encrypted_aes_key = 5;
+  string aes_iv = 6;
+  repeated string subscribed_events = 7;
+}
+
+// 握手响应 - 服务端返回
+message HandshakeResponse {
+  bool success = 1;
+  string message = 2;
+  string server_version = 3;
+  int64 server_time = 4;
+  string session_id = 5;
+}
+
+// 插件API请求
+message PluginRequest {
+  string api_name = 1;
+  map<string, string> metadata = 2;
+  bytes parameters = 3;
+}
+
+// 插件API响应
+message PluginResponse {
+  bool success = 1;
+  int32 code = 2;
+  string message = 3;
+  bytes data = 4;
+  string request_id = 5;
+}
+
+// 事件推送（服务端 -> 插件）
+message EventPush {
+  string event_type = 1;
+  string event_id = 2;
+  int64 event_time = 3;
+  string bot_id = 4;
+  bytes payload = 5;
+}
+
+// 心跳
+message Heartbeat {
+  int64 timestamp = 1;
+  int32 seq = 2;
+}
+
+// 心跳确认
+message HeartbeatAck {
+  int64 timestamp = 1;
+  int32 seq = 2;
+  int64 server_time = 3;
+}
+
+// 错误消息
+message ErrorMessage {
+  int32 code = 1;
+  string message = 2;
+  string details = 3;
+}

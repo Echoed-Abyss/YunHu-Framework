@@ -1,0 +1,225 @@
+syntax = "proto3";
+
+package yunhu.plugin.api;
+
+option java_multiple_files = true;
+option java_package = "com.yunhu.plugin.api";
+option go_package = "yunhu/plugin/api";
+
+// 接收类型
+enum RecvType {
+  RECV_TYPE_UNSPECIFIED = 0;
+  USER = 1;
+  GROUP = 2;
+}
+
+// 内容类型
+enum ContentType {
+  CONTENT_TYPE_UNSPECIFIED = 0;
+  TEXT = 1;
+  IMAGE = 2;
+  VIDEO = 3;
+  FILE = 4;
+  MARKDOWN = 5;
+  HTML = 6;
+}
+
+// 按钮动作类型
+enum ButtonActionType {
+  ACTION_TYPE_UNSPECIFIED = 0;
+  OPEN_URL = 1;
+  COPY = 2;
+  REPORT = 3;
+}
+
+// 按钮对象
+message Button {
+  string text = 1;
+  ButtonActionType action_type = 2;
+  string url = 3;
+  string value = 4;
+}
+
+// 发送消息请求
+message SendMessageRequest {
+  string recv_id = 1;
+  RecvType recv_type = 2;
+  ContentType content_type = 3;
+  TextContent text_content = 4;
+  ImageContent image_content = 5;
+  MarkdownContent markdown_content = 6;
+  FileContent file_content = 7;
+  VideoContent video_content = 8;
+  HtmlContent html_content = 9;
+  string parent_id = 10;
+  repeated ButtonRow buttons = 11;
+}
+
+message ButtonRow {
+  repeated Button buttons = 1;
+}
+
+message TextContent {
+  string text = 1;
+}
+
+message ImageContent {
+  string image_key = 1;
+}
+
+message MarkdownContent {
+  string text = 1;
+}
+
+message FileContent {
+  string file_key = 1;
+}
+
+message VideoContent {
+  string video_key = 1;
+}
+
+message HtmlContent {
+  string html = 1;
+}
+
+// 发送消息响应
+message SendMessageResponse {
+  string msg_id = 1;
+  string recv_id = 2;
+  int64 send_time = 3;
+}
+
+// 编辑消息请求
+message EditMessageRequest {
+  string msg_id = 1;
+  string recv_id = 2;
+  RecvType recv_type = 3;
+  ContentType content_type = 4;
+  TextContent text_content = 5;
+  ImageContent image_content = 6;
+  MarkdownContent markdown_content = 7;
+  FileContent file_content = 8;
+  repeated ButtonRow buttons = 9;
+}
+
+// 编辑消息响应
+message EditMessageResponse {
+  bool success = 1;
+  string msg_id = 2;
+}
+
+// 撤回消息请求
+message RecallMessageRequest {
+  string msg_id = 1;
+  string recv_id = 2;
+  RecvType recv_type = 3;
+}
+
+message RecallMessageResponse {
+  bool success = 1;
+}
+
+// 批量发送消息请求
+message BatchSendMessageRequest {
+  repeated string user_ids = 1;
+  ContentType content_type = 2;
+  TextContent text_content = 3;
+  ImageContent image_content = 4;
+  MarkdownContent markdown_content = 5;
+}
+
+message BatchSendMessageResponse {
+  int32 success_count = 1;
+  int32 fail_count = 2;
+  repeated string failed_user_ids = 3;
+}
+
+// 设置看板请求
+message SetBoardRequest {
+  BoardType board_type = 1;
+  string user_id = 2;
+  ContentType content_type = 3;
+  string content = 4;
+  int64 expire_time = 5;
+}
+
+enum BoardType {
+  BOARD_TYPE_UNSPECIFIED = 0;
+  GLOBAL = 1;
+  USER = 2;
+}
+
+message SetBoardResponse {
+  bool success = 1;
+  string board_id = 2;
+}
+
+// 取消看板请求
+message UnsetBoardRequest {
+  BoardType board_type = 1;
+  string user_id = 2;
+}
+
+message UnsetBoardResponse {
+  bool success = 1;
+}
+
+// 获取消息列表请求
+message GetMessageListRequest {
+  string chat_id = 1;
+  RecvType chat_type = 2;
+  string msg_id = 3;
+  int32 limit = 4;
+  bool newer = 5;
+}
+
+message MessageInfo {
+  string msg_id = 1;
+  int64 send_time = 2;
+  string sender_id = 3;
+  ContentType content_type = 4;
+  bytes content = 5;
+}
+
+message GetMessageListResponse {
+  repeated MessageInfo messages = 1;
+  bool has_more = 2;
+}
+
+// 上传文件请求
+message UploadFileRequest {
+  string file_name = 1;
+  bytes file_data = 2;
+  string file_type = 3;
+}
+
+message UploadFileResponse {
+  string file_key = 1;
+  string file_url = 2;
+  int64 file_size = 3;
+}
+
+// 获取用户信息请求
+message GetUserInfoRequest {
+  string user_id = 1;
+}
+
+message GetUserInfoResponse {
+  string user_id = 1;
+  string nickname = 2;
+  string avatar_url = 3;
+}
+
+// 获取群组信息请求
+message GetGroupInfoRequest {
+  string group_id = 1;
+}
+
+message GetGroupInfoResponse {
+  string group_id = 1;
+  string group_name = 2;
+  string group_avatar = 3;
+  int32 member_count = 4;
+  string owner_id = 5;
+}
