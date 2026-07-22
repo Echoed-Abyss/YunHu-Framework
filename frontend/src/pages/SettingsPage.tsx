@@ -11,23 +11,34 @@ const SettingsPage: React.FC = () => {
     message.success('设置已保存');
   };
 
+  const tabIcons: Record<string, string> = {
+    tcp: '🛰️',
+    yunhu: '☁️',
+    system: '⚙️',
+  };
+
   const tcpSettings = (
     <Form form={form} layout="vertical">
       <Form.Item label="TCP服务端口" name="tcpPort" initialValue={8888}>
-        <Input type="number" />
+        <Input type="number" style={{ borderRadius: 10 }} />
       </Form.Item>
       <Form.Item label="绑定地址" name="tcpHost" initialValue="0.0.0.0">
-        <Input />
+        <Input style={{ borderRadius: 10 }} />
       </Form.Item>
-      <Form.Item label="启用TLS加密" name="tlsEnabled" initialValue={false} valuePropName="checked">
+      <Form.Item
+        label="启用TLS加密"
+        name="tlsEnabled"
+        initialValue={false}
+        valuePropName="checked"
+      >
         <Switch />
       </Form.Item>
       <Form.Item label="心跳超时(秒)" name="heartbeatTimeout" initialValue={60}>
-        <Input type="number" />
+        <Input type="number" style={{ borderRadius: 10 }} />
       </Form.Item>
-      <Divider />
+      <Divider style={{ borderColor: '#f0f4fa' }} />
       <Form.Item label="RSA密钥长度" name="rsaKeySize" initialValue={2048}>
-        <Select>
+        <Select style={{ borderRadius: 10 }}>
           <Option value={1024}>1024位</Option>
           <Option value={2048}>2048位</Option>
           <Option value={4096}>4096位</Option>
@@ -40,7 +51,12 @@ const SettingsPage: React.FC = () => {
           <Option value="aes-256-cbc">AES-256-CBC</Option>
         </Select>
       </Form.Item>
-      <Button type="primary" icon={<SaveOutlined />} onClick={handleSave}>
+      <Button
+        type="primary"
+        icon={<SaveOutlined />}
+        onClick={handleSave}
+        style={{ borderRadius: 12 }}
+      >
         保存设置
       </Button>
     </Form>
@@ -48,20 +64,34 @@ const SettingsPage: React.FC = () => {
 
   const yunhuSettings = (
     <Form form={form} layout="vertical">
-      <Form.Item label="云湖API地址" name="yunhuBaseUrl" initialValue="https://chat-go.jwzhd.com/open-apis/v1">
-        <Input />
+      <Form.Item
+        label="云湖API地址"
+        name="yunhuBaseUrl"
+        initialValue="https://chat-go.jwzhd.com/open-apis/v1"
+      >
+        <Input style={{ borderRadius: 10 }} />
       </Form.Item>
       <Form.Item label="Webhook路径" name="webhookPath" initialValue="/webhook">
-        <Input />
+        <Input style={{ borderRadius: 10 }} />
       </Form.Item>
       <Form.Item label="请求超时(毫秒)" name="requestTimeout" initialValue={30000}>
-        <Input type="number" />
+        <Input type="number" style={{ borderRadius: 10 }} />
       </Form.Item>
-      <Form.Item label="启用频率限制" name="rateLimitEnabled" initialValue={true} valuePropName="checked">
+      <Form.Item
+        label="启用频率限制"
+        name="rateLimitEnabled"
+        initialValue={true}
+        valuePropName="checked"
+      >
         <Switch />
       </Form.Item>
-      <Divider />
-      <Button type="primary" icon={<SaveOutlined />} onClick={handleSave}>
+      <Divider style={{ borderColor: '#f0f4fa' }} />
+      <Button
+        type="primary"
+        icon={<SaveOutlined />}
+        onClick={handleSave}
+        style={{ borderRadius: 12 }}
+      >
         保存设置
       </Button>
     </Form>
@@ -78,29 +108,71 @@ const SettingsPage: React.FC = () => {
         </Select>
       </Form.Item>
       <Form.Item label="日志保留天数" name="logRetentionDays" initialValue={30}>
-        <Input type="number" />
+        <Input type="number" style={{ borderRadius: 10 }} />
       </Form.Item>
-      <Form.Item label="启用CORS" name="corsEnabled" initialValue={true} valuePropName="checked">
+      <Form.Item
+        label="启用CORS"
+        name="corsEnabled"
+        initialValue={true}
+        valuePropName="checked"
+      >
         <Switch />
       </Form.Item>
       <Form.Item label="HTTP服务端口" name="httpPort" initialValue={3000}>
-        <Input type="number" />
+        <Input type="number" style={{ borderRadius: 10 }} />
       </Form.Item>
-      <Divider />
-      <Button type="primary" icon={<SaveOutlined />} onClick={handleSave}>
+      <Divider style={{ borderColor: '#f0f4fa' }} />
+      <Button
+        type="primary"
+        icon={<SaveOutlined />}
+        onClick={handleSave}
+        style={{ borderRadius: 12 }}
+      >
         保存设置
       </Button>
     </Form>
   );
 
   return (
-    <Card title="系统设置">
+    <Card
+      title={
+        <span style={{ color: '#333' }}>
+          <span style={{ marginRight: 6 }}>⚙️</span>系统设置
+        </span>
+      }
+      style={{ borderRadius: 16, boxShadow: '0 2px 12px rgba(74, 144, 217, 0.08)' }}
+      headStyle={{ borderBottom: '1px solid #f0f4fa', borderRadius: '16px 16px 0 0' }}
+    >
       <Tabs
         defaultActiveKey="tcp"
         items={[
-          { key: 'tcp', label: 'TCP服务器', children: tcpSettings },
-          { key: 'yunhu', label: '云湖配置', children: yunhuSettings },
-          { key: 'system', label: '系统', children: systemSettings },
+          {
+            key: 'tcp',
+            label: (
+              <span>
+                <span style={{ marginRight: 4 }}>{tabIcons.tcp}</span>TCP服务器
+              </span>
+            ),
+            children: tcpSettings,
+          },
+          {
+            key: 'yunhu',
+            label: (
+              <span>
+                <span style={{ marginRight: 4 }}>{tabIcons.yunhu}</span>云湖配置
+              </span>
+            ),
+            children: yunhuSettings,
+          },
+          {
+            key: 'system',
+            label: (
+              <span>
+                <span style={{ marginRight: 4 }}>{tabIcons.system}</span>系统
+              </span>
+            ),
+            children: systemSettings,
+          },
         ]}
       />
     </Card>

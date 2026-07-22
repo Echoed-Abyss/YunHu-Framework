@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Card, Button, Select, Tag, List, Badge, Space, Tooltip, Input } from 'antd';
+import { Card, Button, Select, Tag, Space, Tooltip, Input } from 'antd';
 import {
   PlayCircleOutlined,
   PauseCircleOutlined,
@@ -105,20 +105,32 @@ const LogStream: React.FC = () => {
     }
   };
 
-  const getLogIcon = (type: string) => {
-    switch (type) {
-      case 'plugin_connected':
-        return <Badge status="processing" />;
-      case 'plugin_authenticated':
-        return <Badge status="success" />;
-      case 'plugin_disconnected':
-        return <Badge status="error" />;
-      case 'plugin_request':
-        return <Badge status="processing" />;
-      case 'yunhu_event':
-        return <Badge status="warning" />;
+  const getLogBubble = (source: string) => {
+    switch (source) {
+      case 'yunhu':
+        return {
+          dot: '#5bc485',
+          tagBg: 'rgba(181, 232, 197, 0.4)',
+          emoji: '🌿',
+        };
+      case 'plugin':
+        return {
+          dot: '#4A90D9',
+          tagBg: 'rgba(168, 216, 255, 0.4)',
+          emoji: '🔌',
+        };
+      case 'system':
+        return {
+          dot: '#f0b94a',
+          tagBg: 'rgba(255, 232, 181, 0.4)',
+          emoji: '⚙️',
+        };
       default:
-        return <Badge status="default" />;
+        return {
+          dot: '#8e6bb0',
+          tagBg: 'rgba(212, 181, 232, 0.4)',
+          emoji: '✨',
+        };
     }
   };
 
@@ -151,8 +163,10 @@ const LogStream: React.FC = () => {
     <Card
       title={
         <Space>
-          <span>实时日志流</span>
-          <Tag color={isStreaming ? 'green' : 'default'}>
+          <span style={{ color: '#333' }}>
+            <span style={{ marginRight: 6 }}>📜</span>实时日志流
+          </span>
+          <Tag color={isStreaming ? 'green' : 'default'} style={{ borderRadius: 10 }}>
             {isStreaming ? '● 实时更新中' : '○ 已暂停'}
           </Tag>
           <span style={{ fontSize: 12, color: '#888' }}>
@@ -164,10 +178,10 @@ const LogStream: React.FC = () => {
         <Space>
           <Input
             placeholder="搜索日志..."
-            prefix={<SearchOutlined />}
+            prefix={<SearchOutlined style={{ color: '#bbb' }} />}
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
-            style={{ width: 200 }}
+            style={{ width: 200, borderRadius: 10 }}
             size="small"
           />
           <Select
@@ -196,7 +210,12 @@ const LogStream: React.FC = () => {
           </Tooltip>
         </Space>
       }
-      style={{ height: 'calc(100vh - 180px)' }}
+      style={{
+        height: 'calc(100vh - 180px)',
+        borderRadius: 16,
+        boxShadow: '0 2px 12px rgba(74, 144, 217, 0.08)',
+      }}
+      headStyle={{ borderBottom: '1px solid #f0f4fa', borderRadius: '16px 16px 0 0' }}
       bodyStyle={{ padding: 0, height: '100%' }}
     >
       <div
@@ -205,40 +224,99 @@ const LogStream: React.FC = () => {
           height: '100%',
           overflowY: 'auto',
           padding: '12px 16px',
-          fontFamily: 'monospace',
-          fontSize: 12,
-          background: '#141414',
+          background: '#fafbfc',
+          borderRadius: '0 0 16px 16px',
         }}
       >
-        <List
-          size="small"
-          dataSource={filteredLogs}
-          renderItem={(item) => (
-            <List.Item
+        {filteredLogs.map((item, idx) => {
+          const bubble = getLogBubble(item.source);
+          const isEven = idx % 2 === 0;
+          return (
+            <div
+              key={item.id || idx}
               style={{
-                borderBottom: '1px solid #2a2a2a',
-                padding: '6px 0',
+                display: 'flex',
+                gap: 8,
+                alignItems: 'flex-start',
+                padding: '8px 10px',
+                marginBottom: 4,
+                background: isEven ? '#ffffff' : '#f5f8fc',
+                borderRadius: 12,
+                borderLeft: `3px solid ${bubble.dot}`,
+                transition: 'transform 0.15s ease, box-shadow 0.15s ease',
               }}
+              className="yh-log-row"
             >
-              <div style={{ width: '100%', display: 'flex', gap: 8 }}>
-                <span style={{ color: '#666', whiteSpace: 'nowrap' }}>
-                  {dayjs(item.timestamp).format('HH:mm:ss.SSS')}
-                </span>
-                <Tag color={getLogColor(item.source)} style={{ margin: 0 }}>
-                  {item.source}
-                </Tag>
-                <span style={{ color: '#888' }}>{item.type}</span>
-                <span style={{ color: '#ddd', flex: 1 }}>{item.content}</span>
+              <div
+                style={{
+                  width: 26,
+                  height: 26,
+                  borderRadius: '50%',
+                  background: bubble.tagBg,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 13,
+                  flexShrink: 0,
+                }}
+              >
+                {bubble.emoji}
               </div>
-            </List.Item>
-          )}
-        />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    flexWrap: 'wrap',
+                    marginBottom: 2,
+                  }}
+                >
+                  <span
+                    style={{
+                      color: '#999',
+                      fontSize: 11,
+                      fontFamily: 'monospace',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {dayjs(item.timestamp).format('HH:mm:ss.SSS')}
+                  </span>
+                  <Tag
+                    color={getLogColor(item.source)}
+                    style={{ margin: 0, fontSize: 11, borderRadius: 8 }}
+                  >
+                    {item.source}
+                  </Tag>
+                  <span style={{ color: '#aaa', fontSize: 11 }}>{item.type}</span>
+                </div>
+                <div style={{ color: '#444', fontSize: 13, lineHeight: 1.5, wordBreak: 'break-word' }}>
+                  {item.content}
+                </div>
+              </div>
+            </div>
+          );
+        })}
         {filteredLogs.length === 0 && (
-          <div style={{ textAlign: 'center', color: '#555', padding: 40 }}>
-            暂无日志
+          <div style={{ textAlign: 'center', padding: 60 }}>
+            <svg width="64" height="56" viewBox="0 0 64 56" fill="none" style={{ marginBottom: 8 }}>
+              <ellipse cx="32" cy="48" rx="18" ry="4" fill="#e8eef5" />
+              <rect x="14" y="14" width="36" height="30" rx="8" fill="#f0f4fa" />
+              <line x1="22" y1="24" x2="42" y2="24" stroke="#c9d8e8" strokeWidth="2" strokeLinecap="round" />
+              <line x1="22" y1="30" x2="38" y2="30" stroke="#c9d8e8" strokeWidth="2" strokeLinecap="round" />
+              <line x1="22" y1="36" x2="34" y2="36" stroke="#c9d8e8" strokeWidth="2" strokeLinecap="round" />
+              <circle cx="50" cy="14" r="6" fill="#FFB5C5" opacity="0.6" />
+            </svg>
+            <div style={{ color: '#999', fontSize: 13 }}>暂无日志</div>
           </div>
         )}
       </div>
+      <style>{`
+        .yh-log-row:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 3px 10px rgba(74, 144, 217, 0.12);
+        }
+      `}</style>
     </Card>
   );
 };

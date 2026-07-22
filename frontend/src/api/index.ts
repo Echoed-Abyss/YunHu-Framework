@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { PluginInfo, DashboardStats, LogEntry, ApiInfo } from '../types';
+import type { PluginInfo, DashboardStats, LogEntry, ApiInfo, PluginLogEntry } from '../types';
 
 const http = axios.create({
   baseURL: '/api',
@@ -37,6 +37,11 @@ export const gatewayApi = {
 
   getAvailableApis: (): Promise<{ apis: ApiInfo[] }> =>
     http.get('/gateway/apis').then((r) => r.data),
+};
+
+export const logApi = {
+  getPluginLogs: (limit = 100): Promise<{ logs: PluginLogEntry[] }> =>
+    http.get('/dashboard/plugin-logs', { params: { limit } }).then((r) => r.data),
 };
 
 export default http;

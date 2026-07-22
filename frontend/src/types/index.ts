@@ -1,3 +1,14 @@
+export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+
+export interface PluginLogEntry {
+  id: string;
+  level: LogLevel;
+  message: string;
+  pluginId: string;
+  pluginName: string;
+  timestamp: number;
+}
+
 export interface PluginInfo {
   sessionId: string;
   pluginId: string;
@@ -36,6 +47,7 @@ export interface LogEntry {
   content: string;
   timestamp: number;
   source: string;
+  level?: LogLevel;
 }
 
 export interface ApiInfo {

@@ -1,6 +1,6 @@
 {
   "name": "yunhu-bot-framework",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "云湖机器人插件框架 - TCP + Protobuf + RSA/AES 加密通信",
   "private": true,
   "workspaces": [
@@ -10,11 +10,24 @@
   "scripts": {
     "dev:backend": "cd backend && npm run start:dev",
     "dev:frontend": "cd frontend && npm run dev",
+    "dev": "node launcher.js",
     "build:backend": "cd backend && npm run build",
     "build:frontend": "cd frontend && npm run build",
-    "build:proto": "protoc --proto_path=proto --ts_out=backend/src/common/proto --js_out=import_style=commonjs,binary:backend/src/common/proto proto/*.proto"
+    "build:proto": "protoc --proto_path=proto --ts_out=backend/src/common/proto --js_out=import_style=commonjs,binary:backend/src/common/proto proto/*.proto",
+    "build:exe": "pkg launcher.js -t node18-win-x64 -o yunhu-bot.exe --options max-old-space-size=4096"
   },
   "keywords": ["yunhu", "bot", "framework", "protobuf", "tcp"],
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "pkg": "^5.8.1"
+  },
+  "pkg": {
+    "targets": ["node18-win-x64"],
+    "outputPath": ".",
+    "assets": [
+      "proto/*.proto",
+      "backend/.env.example"
+    ]
+  }
 }

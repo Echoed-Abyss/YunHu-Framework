@@ -120,6 +120,30 @@ if __name__ == "__main__":
     bot.start()
 ```
 
+## 发送日志示例 (WriteLog API)
+
+插件可通过 `WriteLog` API 向框架发送日志，日志会显示在前端管理台的日志流中。
+
+```python
+# 发送日志
+log_request = WriteLogRequest(
+    level=LogLevel.INFO,
+    message="插件启动成功",
+    source="my-plugin"
+)
+response = send_plugin_request("WriteLog", log_request)
+```
+
+**字段说明**:
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| level | LogLevel | 日志级别：DEBUG / INFO / WARN / ERROR |
+| message | string | 日志正文内容 |
+| source | string | 日志来源标识（如插件ID或名称） |
+
+调用后可通过 `GET /api/dashboard/plugin-logs` 获取已写入的插件日志列表。
+
 ## 支持的API
 
 - `send_message(recv_id, recv_type, text)` - 发送文本消息
@@ -130,6 +154,7 @@ if __name__ == "__main__":
 - `set_board(content, content_type, global_board)` - 设置看板
 - `get_user_info(user_id)` - 获取用户信息
 - `get_group_info(group_id)` - 获取群组信息
+- `write_log(level, message, source)` - 写入插件日志（WriteLog API）
 
 ## 支持的事件
 

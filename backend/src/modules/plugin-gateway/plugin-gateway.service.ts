@@ -1,5 +1,5 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { OnEvent } from '@nestjs/event-emitter';
+import { OnEvent, EventEmitter2 } from '@nestjs/event-emitter';
 import { TcpServerService } from '../tcp-server/tcp-server.service';
 import { YunhuApiService } from '../yunhu/yunhu-api.service';
 import { ProtoService } from '../../common/proto/proto.service';
@@ -23,6 +23,7 @@ export class PluginGatewayService implements OnModuleInit {
     private readonly tcpServerService: TcpServerService,
     private readonly yunhuApiService: YunhuApiService,
     private readonly protoService: ProtoService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   onModuleInit() {
@@ -68,6 +69,9 @@ export class PluginGatewayService implements OnModuleInit {
           break;
         case 'UploadFile':
           result = await this.handleUploadFile(event);
+          break;
+        case 'WriteLog':
+          result = await this.handleWriteLog(event);
           break;
         default:
           throw new Error(`Unknown API: ${event.apiName}`);
@@ -305,6 +309,36 @@ export class PluginGatewayService implements OnModuleInit {
       fileKey: response.data?.fileKey || '',
       fileUrl: response.data?.fileUrl || '',
       fileSize: response.data?.fileSize || fileData.length,
+    });
+  }
+
+  private async handleWriteLog(event: PluginRequestEvent): Promise<Buffer> {
+    const params = this.protoService.decodeApiMessage(
+      'WriteLogRequest',
+      event.parameters,
+    );
+
+    const levelMap: Record<string, string> = {
+      DEBUG: 'debug',
+      INFO: 'info',
+      WARN: 'warn',
+      ERROR: 'error',
+    };
+
+    const level = levelMap[params.level] || 'info';
+
+    this.logger.log(`[${level.toUpperCase()}] [${event.pluginId}] ${params.message}`);
+
+    this.eventEmitter.emit('plugin.log', {
+      pluginId: event.pluginId,
+      level,
+      message: params.message,
+      source: params.source || event.pluginId,
+      timestamp: Date.now(),
+    });
+
+    return this.protoService.encodeApiMessage('WriteLogResponse', {
+      success: true,
     });
   }
 

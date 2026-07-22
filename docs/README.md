@@ -186,6 +186,14 @@ npm run dev
 - 后端API: http://localhost:3000
 - TCP插件端口: 8888
 
+### 一键启动方式
+
+除上述分别启动前后端的方式外，框架还提供以下便捷启动方式，均会并发安装前后端依赖并并发启动服务：
+
+- **Linux一键启动**：运行 `./start.sh`，脚本会并发安装前后端依赖并并发启动服务
+- **Windows EXE启动**：双击运行 `yunhu-bot.exe`（或运行 `npm run build:exe` 重新打包），程序会并发安装前后端依赖并并发启动服务
+- **Node.js启动**：运行 `npm run dev`，通过 launcher.js 并发启动前后端
+
 ---
 
 ## 后端开发指南
@@ -293,6 +301,15 @@ export default MyPage;
   label: '我的页面',
 }
 ```
+
+### 前端 UI 更新说明
+
+前端已升级为明亮白色系 + 轻二次元风格 UI，主要视觉特性如下：
+
+- 主色 `#4A90D9`，大圆角 `16px`，柔和阴影
+- 仪表盘采用马卡龙色系渐变统计卡片和 ECharts 图表
+- 日志页使用斑马纹和气泡式消息流
+- 插件管理采用卡片式列表布局
 
 ---
 
@@ -434,6 +451,37 @@ message PluginResponse {
 | GetUserInfo | 获取用户信息 |
 | GetGroupInfo | 获取群组信息 |
 | UploadFile | 上传文件 |
+| WriteLog | 写入插件日志 |
+
+### 插件日志 API (WriteLog)
+
+新增 `WriteLog` API，允许插件向框架发送日志，日志会显示在前端管理台的日志流中。
+
+**Protobuf 定义** (api.proto):
+
+```protobuf
+enum LogLevel {
+  LOG_LEVEL_UNSPECIFIED = 0;
+  DEBUG = 1;
+  INFO = 2;
+  WARN = 3;
+  ERROR = 4;
+}
+
+message WriteLogRequest {
+  LogLevel level = 1;
+  string message = 2;
+  string source = 3;
+}
+
+message WriteLogResponse {
+  bool success = 1;
+}
+```
+
+**调用方式**：插件通过 PluginRequest 发送，api_name 设为 "WriteLog"，parameters 为编码后的 WriteLogRequest。
+
+**前端展示**：日志会出现在前端管理台的"日志流"页面，同时可通过 `GET /api/dashboard/plugin-logs` API 获取插件日志列表。
 
 ### 发送消息示例
 

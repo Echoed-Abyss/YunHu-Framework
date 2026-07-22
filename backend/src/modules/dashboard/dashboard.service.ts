@@ -33,6 +33,15 @@ export class DashboardService {
     content: string;
     timestamp: number;
     source: string;
+    level?: string;
+  }> = [];
+
+  private pluginLogs: Array<{
+    id: string;
+    level: string;
+    message: string;
+    pluginId: string;
+    timestamp: number;
   }> = [];
 
   constructor(
@@ -125,12 +134,40 @@ export class DashboardService {
     });
   }
 
+  @OnEvent('plugin.log')
+  onPluginLog(event: any) {
+    this.addLog({
+      id: `log_${event.timestamp}_${Math.random().toString(36).slice(2, 8)}`,
+      type: 'plugin_log',
+      content: `[${event.level.toUpperCase()}] ${event.message}`,
+      timestamp: event.timestamp,
+      source: 'plugin',
+      level: event.level,
+    });
+
+    this.pluginLogs.push({
+      id: `log_${event.timestamp}_${Math.random().toString(36).slice(2, 8)}`,
+      level: event.level,
+      message: event.message,
+      pluginId: event.pluginId,
+      timestamp: event.timestamp,
+    });
+    if (this.pluginLogs.length > 500) {
+      this.pluginLogs.shift();
+    }
+  }
+
+  getPluginLogs(limit: number = 100) {
+    return this.pluginLogs.slice(-limit).reverse();
+  }
+
   private addLog(log: {
     id: string;
     type: string;
     content: string;
     timestamp: number;
     source: string;
+    level?: string;
   }) {
     this.recentMessages.push(log);
     if (this.recentMessages.length > 500) {

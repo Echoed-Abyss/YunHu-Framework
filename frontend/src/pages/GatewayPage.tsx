@@ -1,9 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Tag, Progress, Statistic, Row, Col, Button, Space } from 'antd';
+import { Card, Table, Tag, Progress, Row, Col, Button } from 'antd';
 import { ApiOutlined, ReloadOutlined } from '@ant-design/icons';
 import ReactECharts from 'echarts-for-react';
 import { gatewayApi } from '../api';
 import type { ApiInfo } from '../types';
+
+const macaronColors = [
+  '#FFB5C5',
+  '#A8D8FF',
+  '#B5E8C5',
+  '#D4B5E8',
+  '#FFE8B5',
+  '#FFD4A8',
+  '#A8E8E8',
+  '#C9D4FF',
+];
 
 const ApiGateway: React.FC = () => {
   const [apis, setApis] = useState<ApiInfo[]>([]);
@@ -38,26 +49,33 @@ const ApiGateway: React.FC = () => {
       tooltip: {
         trigger: 'axis',
         axisPointer: { type: 'shadow' },
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        borderColor: '#333',
-        textStyle: { color: '#fff' },
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        borderColor: '#e8eef5',
+        borderWidth: 1,
+        textStyle: { color: '#555' },
+        extraCssText: 'box-shadow: 0 2px 12px rgba(74, 144, 217, 0.12); border-radius: 12px;',
       },
       legend: {
         data: ['成功', '失败'],
-        textStyle: { color: '#ccc' },
+        textStyle: { color: '#666' },
+        icon: 'circle',
+        itemWidth: 10,
+        itemHeight: 10,
       },
       grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
       xAxis: {
         type: 'value',
-        axisLine: { lineStyle: { color: '#555' } },
-        axisLabel: { color: '#999' },
-        splitLine: { lineStyle: { color: '#333' } },
+        axisLine: { show: false },
+        axisTick: { show: false },
+        axisLabel: { color: '#888' },
+        splitLine: { lineStyle: { color: '#eef3f8', type: 'dashed' } },
       },
       yAxis: {
         type: 'category',
         data: data.map((d) => d[0]),
-        axisLine: { lineStyle: { color: '#555' } },
-        axisLabel: { color: '#ccc' },
+        axisLine: { show: false },
+        axisTick: { show: false },
+        axisLabel: { color: '#666' },
       },
       series: [
         {
@@ -65,14 +83,22 @@ const ApiGateway: React.FC = () => {
           type: 'bar',
           stack: 'total',
           data: data.map((d) => d[1].success || 0),
-          itemStyle: { color: '#52c41a' },
+          itemStyle: {
+            color: '#B5E8C5',
+            borderRadius: [8, 0, 0, 8],
+          },
+          barWidth: '55%',
         },
         {
           name: '失败',
           type: 'bar',
           stack: 'total',
           data: data.map((d) => d[1].fail || 0),
-          itemStyle: { color: '#ff4d4f' },
+          itemStyle: {
+            color: '#FFB5C5',
+            borderRadius: [0, 8, 8, 0],
+          },
+          barWidth: '55%',
         },
       ],
     };
@@ -83,24 +109,43 @@ const ApiGateway: React.FC = () => {
       title: 'API名称',
       dataIndex: 'name',
       key: 'name',
-      render: (name: string) => (
-        <Space>
-          <ApiOutlined style={{ color: '#1890ff' }} />
-          <code style={{ color: '#1890ff' }}>{name}</code>
-        </Space>
+      render: (name: string, _record: ApiInfo, idx: number) => (
+        <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span
+            style={{
+              width: 26,
+              height: 26,
+              borderRadius: 8,
+              background: macaronColors[idx % macaronColors.length],
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#fff',
+              fontSize: 13,
+            }}
+          >
+            <ApiOutlined />
+          </span>
+          <code style={{ color: '#4A90D9' }}>{name}</code>
+        </span>
       ),
     },
     {
       title: '描述',
       dataIndex: 'description',
       key: 'description',
+      render: (desc: string) => <span style={{ color: '#666' }}>{desc}</span>,
     },
     {
       title: '调用次数',
       key: 'count',
       render: (_: any, record: ApiInfo) => {
         const apiStat = stats?.byApi[record.name];
-        return apiStat ? apiStat.count : 0;
+        return (
+          <span style={{ fontWeight: 600, color: '#333' }}>
+            {apiStat ? apiStat.count : 0}
+          </span>
+        );
       },
       sorter: (a: ApiInfo, b: ApiInfo) => {
         const aCount = stats?.byApi[a.name]?.count || 0;
@@ -114,13 +159,18 @@ const ApiGateway: React.FC = () => {
       render: (_: any, record: ApiInfo) => {
         const apiStat = stats?.byApi[record.name];
         if (!apiStat || apiStat.count === 0) {
-          return <span style={{ color: '#888' }}>-</span>;
+          return <span style={{ color: '#aaa' }}>-</span>;
         }
         const rate = ((apiStat.success / apiStat.count) * 100).toFixed(1);
         return (
           <Progress
             percent={parseFloat(rate)}
             size="small"
+            strokeColor={{
+              '0%': '#B5E8C5',
+              '100%': '#5bc485',
+            }}
+            trailColor="#f0f4fa"
             status={parseFloat(rate) >= 90 ? 'success' : parseFloat(rate) >= 70 ? 'normal' : 'exception'}
           />
         );
@@ -129,77 +179,112 @@ const ApiGateway: React.FC = () => {
     {
       title: '状态',
       key: 'status',
-      render: () => <Tag color="green">可用</Tag>,
+      render: () => <Tag color="green" style={{ borderRadius: 10 }}>可用</Tag>,
+    },
+  ];
+
+  const statCards = [
+    {
+      title: '总API调用',
+      value: stats?.totalRequests || 0,
+      gradient: 'linear-gradient(135deg, #A8D8FF 0%, #4A90D9 100%)',
+    },
+    {
+      title: '可用API',
+      value: apis.length,
+      gradient: 'linear-gradient(135deg, #B5E8C5 0%, #5bc485 100%)',
+    },
+    {
+      title: '成功率',
+      value:
+        stats && stats.totalRequests > 0
+          ? (
+              (Object.values(stats.byApi).reduce((sum, item: any) => sum + (item.success || 0), 0) /
+                stats.totalRequests) *
+              100
+            ).toFixed(1)
+          : 0,
+      suffix: '%',
+      gradient: 'linear-gradient(135deg, #FFB5C5 0%, #ff8aa3 100%)',
     },
   ];
 
   return (
     <div>
       <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
+        {statCards.map((s, idx) => (
+          <Col xs={12} sm={6} key={idx}>
+            <div
+              className="yh-hover-card"
+              style={{
+                borderRadius: 16,
+                padding: 18,
+                background: s.gradient,
+                boxShadow: '0 4px 16px rgba(74, 144, 217, 0.12)',
+                minHeight: 80,
+              }}
+            >
+              <div style={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: 12 }}>
+                {s.title}
+              </div>
+              <div style={{ color: '#fff', fontSize: 26, fontWeight: 700, marginTop: 4 }}>
+                {s.value}
+                {s.suffix && <span style={{ fontSize: 16, marginLeft: 2 }}>{s.suffix}</span>}
+              </div>
+            </div>
+          </Col>
+        ))}
         <Col xs={12} sm={6}>
-          <Card size="small">
-            <Statistic
-              title="总API调用"
-              value={stats?.totalRequests || 0}
-              valueStyle={{ color: '#1890ff', fontSize: 24 }}
-            />
-          </Card>
-        </Col>
-        <Col xs={12} sm={6}>
-          <Card size="small">
-            <Statistic
-              title="可用API"
-              value={apis.length}
-              valueStyle={{ color: '#52c41a', fontSize: 24 }}
-            />
-          </Card>
-        </Col>
-        <Col xs={12} sm={6}>
-          <Card size="small">
-            <Statistic
-              title="成功率"
-              value={
-                stats && stats.totalRequests > 0
-                  ? (
-                      (Object.values(stats.byApi).reduce((sum, item: any) => sum + (item.success || 0), 0) /
-                        stats.totalRequests) *
-                      100
-                    ).toFixed(1)
-                  : 0
-              }
-              suffix="%"
-              valueStyle={{ color: '#52c41a', fontSize: 24 }}
-            />
-          </Card>
-        </Col>
-        <Col xs={12} sm={6}>
-          <Card size="small">
+          <div
+            className="yh-hover-card"
+            style={{
+              borderRadius: 16,
+              padding: 18,
+              background: '#fff',
+              boxShadow: '0 2px 12px rgba(74, 144, 217, 0.08)',
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
             <Button
               icon={<ReloadOutlined />}
               block
               onClick={loadData}
+              style={{ borderRadius: 12, height: 40 }}
             >
               刷新数据
             </Button>
-          </Card>
+          </div>
         </Col>
       </Row>
 
       <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
         <Col span={24}>
-          <Card title="API调用成功率统计" size="small">
-            <ReactECharts
-              option={getSuccessRateChart()}
-              style={{ height: 300 }}
-              theme="dark"
-            />
+          <Card
+            title={
+              <span style={{ color: '#333' }}>
+                <span style={{ marginRight: 6 }}>📊</span>API调用成功率统计
+              </span>
+            }
+            size="small"
+            style={{ borderRadius: 16, boxShadow: '0 2px 12px rgba(74, 144, 217, 0.08)' }}
+            headStyle={{ borderBottom: '1px solid #f0f4fa', borderRadius: '16px 16px 0 0' }}
+          >
+            <ReactECharts option={getSuccessRateChart()} style={{ height: 300 }} />
           </Card>
         </Col>
       </Row>
 
       <Card
-        title="插件API列表"
-        extra={<Tag color="blue">TCP + Protobuf</Tag>}
+        title={
+          <span style={{ color: '#333' }}>
+            <span style={{ marginRight: 6 }}>🛰️</span>插件API列表
+          </span>
+        }
+        extra={<Tag color="blue" style={{ borderRadius: 10 }}>TCP + Protobuf</Tag>}
+        style={{ borderRadius: 16, boxShadow: '0 2px 12px rgba(74, 144, 217, 0.08)' }}
+        headStyle={{ borderBottom: '1px solid #f0f4fa', borderRadius: '16px 16px 0 0' }}
       >
         <Table
           columns={columns}

@@ -17,6 +17,8 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background: #f5f7fa;
+  color: #333;
 }
 
 code {
@@ -24,20 +26,43 @@ code {
     monospace;
 }
 
+/* 柔和的亮色滚动条 */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #1f1f1f;
+  background: #f0f4fa;
+  border-radius: 8px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #444;
-  border-radius: 3px;
+  background: #c9d8e8;
+  border-radius: 8px;
+  border: 2px solid #f0f4fa;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: #a8c4e0;
+}
+
+::-webkit-scrollbar-corner {
+  background: #f0f4fa;
+}
+
+/* Firefox 滚动条 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #c9d8e8 #f0f4fa;
+}
+
+/* 通用悬停上浮卡片效果 */
+.yh-hover-card {
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.yh-hover-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(74, 144, 217, 0.16) !important;
 }

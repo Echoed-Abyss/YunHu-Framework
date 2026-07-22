@@ -19,6 +19,14 @@ export class DashboardController {
     };
   }
 
+  @Get('plugin-logs')
+  getPluginLogs(@Query('limit') limit: string) {
+    const logLimit = parseInt(limit, 10) || 100;
+    return {
+      logs: this.dashboardService.getPluginLogs(logLimit),
+    };
+  }
+
   @Sse('stream')
   streamStats() {
     return interval(2000).pipe(

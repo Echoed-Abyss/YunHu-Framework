@@ -329,6 +329,55 @@
 
 ---
 
+## 插件日志 API
+
+框架为插件提供了 `WriteLog` API，允许插件向框架发送日志。日志会显示在前端管理台的日志流中，便于插件运行状态的观测与调试。
+
+**调用方式**：插件通过 `PluginRequest` 发送，`api_name` 设为 `"WriteLog"`，`parameters` 为 Protobuf 编码后的 `WriteLogRequest`。
+
+**Protobuf 定义** (api.proto):
+
+```protobuf
+enum LogLevel {
+  LOG_LEVEL_UNSPECIFIED = 0;
+  DEBUG = 1;
+  INFO = 2;
+  WARN = 3;
+  ERROR = 4;
+}
+
+message WriteLogRequest {
+  LogLevel level = 1;      // 日志级别
+  string message = 2;      // 日志内容
+  string source = 3;       // 日志来源（如插件ID或名称）
+}
+
+message WriteLogResponse {
+  bool success = 1;        // 是否写入成功
+}
+```
+
+**WriteLogRequest 字段说明**:
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| level | LogLevel | 是 | 日志级别：DEBUG(1) / INFO(2) / WARN(3) / ERROR(4) |
+| message | string | 是 | 日志正文内容 |
+| source | string | 是 | 日志来源标识，建议填入插件ID或插件名称 |
+
+**WriteLogResponse 字段说明**:
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| success | bool | 是否写入成功 |
+
+**前端展示**：
+
+- 日志会出现在前端管理台的"日志流"页面
+- 同时可通过 `GET /api/dashboard/plugin-logs` API 获取插件日志列表
+
+---
+
 ## 事件订阅
 
 事件订阅是系统将软件中的消息或其他事件推送到你的服务器中。推送通过HTTP协议以POST请求的方式推送JSON格式的数据。

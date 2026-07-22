@@ -5,6 +5,9 @@ yunhu-bot-framework/
 ├── LICENSE
 ├── README.md
 ├── package.json                    # 根package.json (workspace)
+├── start.sh                        # Linux 一键启动脚本（并发安装+启动）
+├── launcher.js                     # Windows/通用 Node.js 启动器（可打包为 exe）
+├── yunhu-bot.exe                   # Windows 可执行文件（pkg 打包）
 │
 ├── proto/                          # Protobuf 协议定义
 │   ├── common.proto                # 通用消息类型、握手、心跳等

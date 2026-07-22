@@ -211,6 +211,25 @@ message GetUserInfoResponse {
   string avatar_url = 3;
 }
 
+// 写入插件日志请求
+message WriteLogRequest {
+  LogLevel level = 1;
+  string message = 2;
+  string source = 3;
+}
+
+enum LogLevel {
+  LOG_LEVEL_UNSPECIFIED = 0;
+  DEBUG = 1;
+  INFO = 2;
+  WARN = 3;
+  ERROR = 4;
+}
+
+message WriteLogResponse {
+  bool success = 1;
+}
+
 // 获取群组信息请求
 message GetGroupInfoRequest {
   string group_id = 1;
