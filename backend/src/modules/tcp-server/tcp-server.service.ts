@@ -63,6 +63,10 @@ export class TcpServerService implements OnModuleInit, OnModuleDestroy {
 
     this.logger.log(`New connection from ${remoteAddress}:${remotePort}, session: ${sessionId}`);
 
+    socket.setKeepAlive(true, 30000);
+    socket.setNoDelay(true);
+    socket.setTimeout(0);
+
     const connection: PluginConnection = {
       socket,
       pluginId: '',
@@ -230,6 +234,12 @@ export class TcpServerService implements OnModuleInit, OnModuleDestroy {
 
       this.sendHandshakeResponse(connection, true, '握手成功');
 
+      setTimeout(() => {
+        if (!connection.socket.destroyed) {
+          this.sendHeartbeatAck(connection);
+        }
+      }, 100);
+
       this.eventEmitter.emit('plugin.authenticated', {
         sessionId: connection.sessionId,
         pluginId: connection.pluginId,
@@ -255,6 +265,23 @@ export class TcpServerService implements OnModuleInit, OnModuleDestroy {
     const messageWrapper = this.protoService.encodeMessage({
       type: 'HANDSHAKE_RESPONSE',
       payload: responsePayload,
+      timestamp: Date.now(),
+      requestId: '',
+    });
+
+    this.sendRawMessage(connection, messageWrapper);
+  }
+
+  private sendHeartbeatAck(connection: PluginConnection) {
+    const ackPayload = this.protoService.encodeHeartbeatAck({
+      timestamp: Date.now(),
+      seq: connection.heartbeatSeq,
+      serverTime: Date.now(),
+    });
+
+    const messageWrapper = this.protoService.encodeMessage({
+      type: 'HEARTBEAT_ACK',
+      payload: ackPayload,
       timestamp: Date.now(),
       requestId: '',
     });
