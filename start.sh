@@ -29,6 +29,12 @@ fi
 echo "[信息] Node.js 版本: $(node -v)"
 echo ""
 
+# 检查并删除旧的 package-lock.json（避免跨平台原生模块问题）
+if [ -f "$ROOT_DIR/package-lock.json" ]; then
+    echo "[信息] 删除旧的 package-lock.json（避免跨平台原生模块冲突）..."
+    rm -f "$ROOT_DIR/package-lock.json"
+fi
+
 # 并发安装依赖
 echo ">>> 开始并发安装依赖..."
 INSTALL_START=$(date +%s)
@@ -36,7 +42,7 @@ INSTALL_START=$(date +%s)
 (
     echo "  [后端] 安装依赖..."
     cd "$BACKEND_DIR"
-    npm install --silent 2>&1 | tail -1
+    npm install --no-package-lock 2>&1 | tail -1
     echo "  [后端] 依赖安装完成"
 ) &
 BACKEND_INSTALL_PID=$!
@@ -44,7 +50,7 @@ BACKEND_INSTALL_PID=$!
 (
     echo "  [前端] 安装依赖..."
     cd "$FRONTEND_DIR"
-    npm install --silent 2>&1 | tail -1
+    npm install --no-package-lock 2>&1 | tail -1
     echo "  [前端] 依赖安装完成"
 ) &
 FRONTEND_INSTALL_PID=$!

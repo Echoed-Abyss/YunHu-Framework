@@ -35,9 +35,33 @@ int checkNode() {
     return 0;
 }
 
+void removePackageLock() {
+    char lockPath[MAX_PATH];
+    snprintf(lockPath, MAX_PATH, "%s\\package-lock.json", exeDir);
+    if (GetFileAttributesA(lockPath) != INVALID_FILE_ATTRIBUTES) {
+        printf("[INFO] Removing old package-lock.json (cross-platform fix)...\n");
+        DeleteFileA(lockPath);
+    }
+}
+
+void fixRollupNative() {
+    char nativePath[MAX_PATH];
+    char win32Path[MAX_PATH];
+    snprintf(nativePath, MAX_PATH, "%s\\frontend\\node_modules\\rollup\\dist\\native.js", exeDir);
+    snprintf(win32Path, MAX_PATH, "%s\\frontend\\node_modules\\@rollup\\rollup-win32-x64-msvc", exeDir);
+
+    if (GetFileAttributesA(nativePath) != INVALID_FILE_ATTRIBUTES &&
+        GetFileAttributesA(win32Path) == INVALID_FILE_ATTRIBUTES) {
+        printf("  [FRONTEND] Fixing rollup cross-platform native module...\n");
+        char cmd[MAX_CMD];
+        snprintf(cmd, MAX_CMD, "cd /d \"%s\\frontend\" && npm install @rollup/rollup-win32-x64-msvc --no-save --silent", exeDir);
+        system(cmd);
+    }
+}
+
 unsigned __stdcall installBackend(void *arg) {
     char cmd[MAX_CMD];
-    snprintf(cmd, MAX_CMD, "cd /d \"%s\\backend\" && npm install --silent", exeDir);
+    snprintf(cmd, MAX_CMD, "cd /d \"%s\\backend\" && npm install --no-package-lock --silent", exeDir);
     printf("  [BACKEND] Installing dependencies...\n");
     int ret = system(cmd);
     printf("  [BACKEND] Install %s\n", ret == 0 ? "complete" : "failed");
@@ -46,7 +70,7 @@ unsigned __stdcall installBackend(void *arg) {
 
 unsigned __stdcall installFrontend(void *arg) {
     char cmd[MAX_CMD];
-    snprintf(cmd, MAX_CMD, "cd /d \"%s\\frontend\" && npm install --silent", exeDir);
+    snprintf(cmd, MAX_CMD, "cd /d \"%s\\frontend\" && npm install --no-package-lock --silent", exeDir);
     printf("  [FRONTEND] Installing dependencies...\n");
     int ret = system(cmd);
     printf("  [FRONTEND] Install %s\n", ret == 0 ? "complete" : "failed");
@@ -84,6 +108,9 @@ int main() {
         return 1;
     }
 
+    /* Remove old package-lock.json */
+    removePackageLock();
+
     /* Check .env */
     char envPath[MAX_PATH];
     snprintf(envPath, MAX_PATH, "%s\\backend\\.env", exeDir);
@@ -104,6 +131,11 @@ int main() {
     CloseHandle(threads[0]);
     CloseHandle(threads[1]);
     printf("\n>>> Dependencies installed.\n\n");
+
+    /* Fix rollup cross-platform native module */
+    printf(">>> Checking cross-platform native modules...\n");
+    fixRollupNative();
+    printf(">>> Native modules fixed.\n\n");
 
     /* Concurrent start */
     printf(">>> Starting services (concurrent)...\n\n");

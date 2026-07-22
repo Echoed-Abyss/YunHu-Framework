@@ -20,17 +20,37 @@ for /f "tokens=*" %%v in ('node -v') do set NODE_VERSION=%%v
 echo [信息] Node.js 版本: %NODE_VERSION%
 echo.
 
+REM 删除旧的 package-lock.json（避免跨平台原生模块问题）
+if exist "%~dp0package-lock.json" (
+    echo [信息] 删除旧的 package-lock.json（避免跨平台原生模块冲突）...
+    del "%~dp0package-lock.json" >nul 2>&1
+)
+
 REM 并发安装依赖
 echo ^>^>^> 开始并发安装依赖...
 set INSTALL_START=%time%
 
-start /b "后端安装" cmd /c "cd /d "%~dp0backend" && npm install --silent && echo [后端] 依赖安装完成"
-start /b "前端安装" cmd /c "cd /d "%~dp0frontend" && npm install --silent && echo [前端] 依赖安装完成"
+start /b "后端安装" cmd /c "cd /d "%~dp0backend" && npm install --no-package-lock --silent && echo [后端] 依赖安装完成"
+start /b "前端安装" cmd /c "cd /d "%~dp0frontend" && npm install --no-package-lock --silent && echo [前端] 依赖安装完成"
 
 REM 等待安装完成
 timeout /t 30 /nobreak >nul
 
 echo ^>^>^> 依赖安装完成
+echo.
+
+REM Windows 下修复 rollup 跨平台原生模块
+echo ^>^>^> 检查并修复跨平台原生模块...
+cd /d "%~dp0frontend"
+if exist "node_modules\rollup\dist\native.js" (
+    if not exist "node_modules\@rollup\rollup-win32-x64-msvc" (
+        echo   [前端] 修复 rollup 跨平台原生模块...
+        npm install @rollup/rollup-win32-x64-msvc --no-save --silent
+    )
+)
+cd /d "%~dp0"
+
+echo ^>^>^> 原生模块修复完成
 echo.
 
 REM 检查 .env

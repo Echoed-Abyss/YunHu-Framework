@@ -36,10 +36,49 @@ function checkNode() {
   }
 }
 
+function fixRollupPlatform(dir, name) {
+  return new Promise((resolve) => {
+    if (!isWindows) {
+      resolve();
+      return;
+    }
+    // Windows 下检测并修复 rollup 原生模块
+    const rollupNativePath = path.join(dir, 'node_modules', 'rollup', 'dist', 'native.js');
+    if (!fs.existsSync(rollupNativePath)) {
+      resolve();
+      return;
+    }
+    try {
+      const nativeContent = fs.readFileSync(rollupNativePath, 'utf-8');
+      if (nativeContent.includes('win32-x64-msvc')) {
+        const win32Pkg = '@rollup/rollup-win32-x64-msvc';
+        const win32Path = path.join(dir, 'node_modules', win32Pkg);
+        if (!fs.existsSync(win32Path)) {
+          log(name, `修复 rollup 跨平台原生模块...`);
+          const fixProc = spawn(npmCmd, ['install', win32Pkg, '--no-save', '--silent'], {
+            cwd: dir,
+            shell: true,
+            stdio: 'pipe',
+          });
+          fixProc.on('close', () => resolve());
+        } else {
+          resolve();
+        }
+      } else {
+        resolve();
+      }
+    } catch (e) {
+      resolve();
+    }
+  });
+}
+
 function installDeps(dir, name) {
   return new Promise((resolve, reject) => {
     log(name, '安装依赖...');
-    const proc = spawn(npmCmd, ['install', '--silent'], {
+    // 使用 --no-package-lock 避免跨平台 lockfile 问题
+    const args = ['install', '--no-package-lock'];
+    const proc = spawn(npmCmd, args, {
       cwd: dir,
       shell: true,
       stdio: 'pipe',
@@ -56,8 +95,9 @@ function installDeps(dir, name) {
         if (line.trim() && !line.includes('npm warn')) log(name, line.trim());
       });
     });
-    proc.on('close', (code) => {
+    proc.on('close', async (code) => {
       if (code === 0) {
+        await fixRollupPlatform(dir, name);
         log(name, '依赖安装完成');
         resolve();
       } else {
