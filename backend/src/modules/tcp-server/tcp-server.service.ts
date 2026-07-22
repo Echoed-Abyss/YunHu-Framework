@@ -378,10 +378,7 @@ export class TcpServerService implements OnModuleInit, OnModuleDestroy {
   private sendRawMessage(connection: PluginConnection, data: Buffer) {
     if (connection.socket.destroyed) return;
 
-    const lengthBuffer = Buffer.alloc(4);
-    lengthBuffer.writeUInt32BE(data.length, 0);
-
-    connection.socket.write(Buffer.concat([lengthBuffer, data]));
+    connection.socket.write(data);
   }
 
   private sendError(connection: PluginConnection, code: number, message: string) {
