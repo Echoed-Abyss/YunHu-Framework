@@ -242,3 +242,47 @@ message GetGroupInfoResponse {
   int32 member_count = 4;
   string owner_id = 5;
 }
+
+// 获取用户列表请求
+message GetUserListRequest {
+  int32 limit = 1;
+  string cursor = 2;
+}
+
+message UserBrief {
+  string user_id = 1;
+  string nickname = 2;
+  string avatar_url = 3;
+}
+
+message GetUserListResponse {
+  repeated UserBrief users = 1;
+  string next_cursor = 2;
+  bool has_more = 3;
+}
+
+// 获取群组列表请求
+message GetGroupListRequest {
+  int32 limit = 1;
+  string cursor = 2;
+}
+
+message GroupBrief {
+  string group_id = 1;
+  string group_name = 2;
+  string group_avatar = 3;
+}
+
+message GetGroupListResponse {
+  repeated GroupBrief groups = 1;
+  string next_cursor = 2;
+  bool has_more = 3;
+}
+
+// 通用API响应
+message ApiResponse {
+  bool success = 1;
+  int32 code = 2;
+  string message = 3;
+  bytes data = 4;
+}
