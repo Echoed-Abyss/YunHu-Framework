@@ -22,7 +22,7 @@ const SettingsPage: React.FC = () => {
       <Form.Item label="TCP服务端口" name="tcpPort" initialValue={8888}>
         <Input type="number" style={{ borderRadius: 10 }} />
       </Form.Item>
-      <Form.Item label="绑定地址" name="tcpHost" initialValue="0.0.0.0">
+      <Form.Item label="绑定地址" name="tcpHost" initialValue="127.0.0.1">
         <Input style={{ borderRadius: 10 }} />
       </Form.Item>
       <Form.Item

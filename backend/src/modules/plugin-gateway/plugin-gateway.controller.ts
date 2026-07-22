@@ -27,6 +27,7 @@ export class PluginGatewayController {
         { name: 'GetUserInfo', description: '获取用户信息' },
         { name: 'GetGroupInfo', description: '获取群组信息' },
         { name: 'UploadFile', description: '上传文件' },
+        { name: 'WriteLog', description: '插件日志输出' },
       ],
     };
   }

@@ -211,12 +211,14 @@ const LogStream: React.FC = () => {
         </Space>
       }
       style={{
-        height: 'calc(100vh - 180px)',
+        height: 'calc(100vh - 190px)',
         borderRadius: 16,
         boxShadow: '0 2px 12px rgba(74, 144, 217, 0.08)',
+        display: 'flex',
+        flexDirection: 'column',
       }}
-      headStyle={{ borderBottom: '1px solid #f0f4fa', borderRadius: '16px 16px 0 0' }}
-      bodyStyle={{ padding: 0, height: '100%' }}
+      headStyle={{ borderBottom: '1px solid #f0f4fa', borderRadius: '16px 16px 0 0', flexShrink: 0 }}
+      bodyStyle={{ padding: 0, flex: 1, overflow: 'hidden' }}
     >
       <div
         ref={scrollRef}

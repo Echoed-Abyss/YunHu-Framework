@@ -242,7 +242,7 @@ const ApiGateway: React.FC = () => {
               padding: 18,
               background: '#fff',
               boxShadow: '0 2px 12px rgba(74, 144, 217, 0.08)',
-              height: '100%',
+              minHeight: 80,
               display: 'flex',
               alignItems: 'center',
             }}
