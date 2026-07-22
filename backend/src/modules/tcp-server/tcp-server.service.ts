@@ -234,12 +234,6 @@ export class TcpServerService implements OnModuleInit, OnModuleDestroy {
 
       this.sendHandshakeResponse(connection, true, '握手成功');
 
-      setTimeout(() => {
-        if (!connection.socket.destroyed) {
-          this.sendHeartbeatAck(connection);
-        }
-      }, 100);
-
       this.eventEmitter.emit('plugin.authenticated', {
         sessionId: connection.sessionId,
         pluginId: connection.pluginId,
@@ -405,7 +399,10 @@ export class TcpServerService implements OnModuleInit, OnModuleDestroy {
   private sendRawMessage(connection: PluginConnection, data: Buffer) {
     if (connection.socket.destroyed) return;
 
-    connection.socket.write(data);
+    const lengthBuffer = Buffer.alloc(4);
+    lengthBuffer.writeUInt32BE(data.length, 0);
+
+    connection.socket.write(Buffer.concat([lengthBuffer, data]));
   }
 
   private sendError(connection: PluginConnection, code: number, message: string) {

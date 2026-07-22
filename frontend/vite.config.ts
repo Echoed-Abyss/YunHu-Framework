@@ -31,4 +31,7 @@ export default defineConfig({
     sourcemap: true,
   },
   cacheDir: '../.vite',
+  optimizeDeps: {
+    cacheDir: path.resolve(__dirname, '../.vite/deps'),
+  },
 });
