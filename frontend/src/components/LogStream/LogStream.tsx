@@ -18,11 +18,14 @@ const LogStream: React.FC = () => {
   const [isStreaming, setIsStreaming] = useState(true);
   const [filter, setFilter] = useState<string>('all');
   const [searchText, setSearchText] = useState('');
+  const [isCleared, setIsCleared] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const streamRef = useRef<EventSource | null>(null);
 
   useEffect(() => {
-    loadInitialLogs();
+    if (!isCleared) {
+      loadInitialLogs();
+    }
     return () => {
       if (streamRef.current) {
         streamRef.current.close();
@@ -74,6 +77,7 @@ const LogStream: React.FC = () => {
               const newLogs = [...prev, ...data.logs];
               return newLogs.slice(-500);
             });
+            setIsCleared(false);
           }
         } catch (e) {
           // ignore parse errors
@@ -90,6 +94,7 @@ const LogStream: React.FC = () => {
 
   const clearLogs = () => {
     setLogs([]);
+    setIsCleared(true);
   };
 
   const getLogColor = (source: string) => {

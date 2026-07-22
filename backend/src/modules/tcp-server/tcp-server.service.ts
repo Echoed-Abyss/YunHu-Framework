@@ -168,6 +168,23 @@ export class TcpServerService implements OnModuleInit, OnModuleDestroy {
           const decipher = crypto.createDecipheriv('aes-256-cbc', connection.aesCipher.key, strategy.iv);
           decipher.setAutoPadding(strategy.autoPadding);
           decryptedPayload = Buffer.concat([decipher.update(data), decipher.final()]);
+          
+          if (!strategy.autoPadding) {
+            const paddingLength = decryptedPayload[decryptedPayload.length - 1];
+            if (paddingLength > 0 && paddingLength <= 16) {
+              let isValidPadding = true;
+              for (let i = 1; i <= paddingLength; i++) {
+                if (decryptedPayload[decryptedPayload.length - i] !== paddingLength) {
+                  isValidPadding = false;
+                  break;
+                }
+              }
+              if (isValidPadding) {
+                decryptedPayload = decryptedPayload.slice(0, decryptedPayload.length - paddingLength);
+              }
+            }
+          }
+          
           usedStrategy = strategy.name;
           break;
         } catch (err) {

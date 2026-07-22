@@ -11,10 +11,10 @@ const SettingsPage: React.FC = () => {
     message.success('设置已保存');
   };
 
-  const tabIcons: Record<string, string> = {
-    tcp: '🛰️',
-    yunhu: '☁️',
-    system: '⚙️',
+  const tabIcons: Record<string, React.ReactNode> = {
+    tcp: <span>🛰️</span>,
+    yunhu: <span>☁️</span>,
+    system: <span>⚙️</span>,
   };
 
   const tcpSettings = (

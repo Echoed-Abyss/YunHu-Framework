@@ -27,17 +27,37 @@ interface Bot {
 }
 
 const BotManagement: React.FC = () => {
-  const [bots, setBots] = useState<Bot[]>([
-    {
-      id: 'bot_001',
-      name: '测试机器人',
-      token: 'token_xxxxxxxxx',
-      status: 'active',
-      webhookUrl: 'http://localhost:3000/webhook?token=xxx',
-      eventSubscriptions: ['message.receive.normal', 'bot.followed'],
-      createdAt: '2024-01-01',
-    },
-  ]);
+  const loadBots = (): Bot[] => {
+    try {
+      const stored = localStorage.getItem('yunhu_bots');
+      if (stored) {
+        return JSON.parse(stored);
+      }
+    } catch (e) {
+      console.error('Failed to load bots from localStorage', e);
+    }
+    return [
+      {
+        id: 'bot_001',
+        name: '测试机器人',
+        token: 'token_xxxxxxxxx',
+        status: 'active',
+        webhookUrl: 'http://localhost:3000/webhook?token=xxx',
+        eventSubscriptions: ['message.receive.normal', 'bot.followed'],
+        createdAt: '2024-01-01',
+      },
+    ];
+  };
+
+  const saveBots = (bots: Bot[]) => {
+    try {
+      localStorage.setItem('yunhu_bots', JSON.stringify(bots));
+    } catch (e) {
+      console.error('Failed to save bots to localStorage', e);
+    }
+  };
+
+  const [bots, setBots] = useState<Bot[]>(loadBots());
   const [modalVisible, setModalVisible] = useState(false);
   const [editingBot, setEditingBot] = useState<Bot | null>(null);
   const [form] = Form.useForm();
@@ -55,15 +75,18 @@ const BotManagement: React.FC = () => {
   };
 
   const handleDelete = (id: string) => {
-    setBots(bots.filter((b) => b.id !== id));
+    const newBots = bots.filter((b) => b.id !== id);
+    setBots(newBots);
+    saveBots(newBots);
     message.success('删除成功');
   };
 
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
+      let newBots: Bot[];
       if (editingBot) {
-        setBots(bots.map((b) => (b.id === editingBot.id ? { ...b, ...values } : b)));
+        newBots = bots.map((b) => (b.id === editingBot.id ? { ...b, ...values } : b));
         message.success('更新成功');
       } else {
         const newBot: Bot = {
@@ -73,9 +96,11 @@ const BotManagement: React.FC = () => {
           eventSubscriptions: [],
           createdAt: new Date().toISOString().split('T')[0],
         };
-        setBots([...bots, newBot]);
+        newBots = [...bots, newBot];
         message.success('添加成功');
       }
+      setBots(newBots);
+      saveBots(newBots);
       setModalVisible(false);
     } catch (err) {
       // validation error
@@ -83,11 +108,11 @@ const BotManagement: React.FC = () => {
   };
 
   const toggleStatus = (id: string, checked: boolean) => {
-    setBots(
-      bots.map((b) =>
-        b.id === id ? { ...b, status: checked ? 'active' : 'inactive' } : b,
-      ),
+    const newBots: Bot[] = bots.map((b) =>
+      b.id === id ? { ...b, status: checked ? 'active' : 'inactive' as const } : b,
     );
+    setBots(newBots);
+    saveBots(newBots);
   };
 
   const avatarPalette = [
