@@ -2,6 +2,7 @@ import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/commo
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import * as net from 'net';
+import * as crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
 import { CryptoUtil } from '../../common/utils/crypto.util';
 import { ProtoService } from '../../common/proto/proto.service';
@@ -151,21 +152,36 @@ export class TcpServerService implements OnModuleInit, OnModuleDestroy {
 
     if (connection.isAuthenticated && connection.aesCipher) {
       this.logger.debug('Decrypting message with AES');
-      try {
-        if (connection.useZeroIv) {
-          const zeroIv = Buffer.alloc(16, 0);
-          payload = CryptoUtil.decryptWithAES(connection.aesCipher.key, zeroIv, data);
-        } else {
-          payload = CryptoUtil.decryptWithAES(connection.aesCipher.key, connection.aesCipher.iv, data);
+      
+      const decryptStrategies = [
+        { iv: connection.aesCipher.iv, autoPadding: true, name: 'actual IV + PKCS7' },
+        { iv: Buffer.alloc(16, 0), autoPadding: true, name: 'zero IV + PKCS7' },
+        { iv: connection.aesCipher.iv, autoPadding: false, name: 'actual IV + no padding' },
+        { iv: Buffer.alloc(16, 0), autoPadding: false, name: 'zero IV + no padding' },
+      ];
+
+      let decryptedPayload: Buffer | null = null;
+      let usedStrategy: string = '';
+
+      for (const strategy of decryptStrategies) {
+        try {
+          const decipher = crypto.createDecipheriv('aes-256-cbc', connection.aesCipher.key, strategy.iv);
+          decipher.setAutoPadding(strategy.autoPadding);
+          decryptedPayload = Buffer.concat([decipher.update(data), decipher.final()]);
+          usedStrategy = strategy.name;
+          break;
+        } catch (err) {
+          this.logger.debug(`AES decrypt failed: ${strategy.name}`);
+          continue;
         }
-      } catch (err) {
-        this.logger.debug(`AES decrypt with actual IV failed, trying zero IV: ${err.message}`);
-        const zeroIv = Buffer.alloc(16, 0);
-        payload = CryptoUtil.decryptWithAES(connection.aesCipher.key, zeroIv, data);
-        connection.useZeroIv = true;
-        this.logger.log(`Plugin ${connection.pluginId} switched to zero-IV AES mode`);
       }
-      this.logger.debug(`Decrypted payload: ${payload.length} bytes`);
+
+      if (!decryptedPayload) {
+        throw new Error('AES decrypt failed with all strategies');
+      }
+
+      payload = decryptedPayload;
+      this.logger.debug(`AES decrypt succeeded with strategy: ${usedStrategy}`);
     } else {
       this.logger.debug('Message is not encrypted (handshake phase)');
       payload = data;

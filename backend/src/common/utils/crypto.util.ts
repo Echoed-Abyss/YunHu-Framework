@@ -76,9 +76,20 @@ export class CryptoUtil {
   }
 
   static decryptWithAES(key: Buffer, iv: Buffer, ciphertext: Buffer): Buffer {
-    const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
-    const decrypted = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
-    return decrypted;
+    const paddingOptions = [true, false];
+
+    for (const autoPadding of paddingOptions) {
+      try {
+        const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
+        decipher.setAutoPadding(autoPadding);
+        const decrypted = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
+        return decrypted;
+      } catch (err) {
+        continue;
+      }
+    }
+
+    throw new Error('AES decrypt failed with all padding options');
   }
 
   static generateSignature(privateKeyPem: string, data: Buffer): string {
