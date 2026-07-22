@@ -8,6 +8,10 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
+    modules: [
+      path.resolve(__dirname, '../node_modules'),
+      'node_modules',
+    ],
   },
   server: {
     port: 5173,
@@ -26,4 +30,5 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: true,
   },
+  cacheDir: '../.vite',
 });
