@@ -98,52 +98,87 @@ export class TcpServerService implements OnModuleInit, OnModuleDestroy {
 
   private handleData(connection: PluginConnection, data: Buffer) {
     connection.buffer = Buffer.concat([connection.buffer, data]);
+    this.logger.debug(`Received raw data: ${data.length} bytes, buffer now: ${connection.buffer.length} bytes`);
 
     while (connection.buffer.length >= 4) {
-      const length = connection.buffer.readUInt32BE(0);
-      if (connection.buffer.length < 4 + length) {
-        break;
+      let length: number;
+      let messageData: Buffer;
+      let hasLengthPrefix = true;
+
+      const firstByte = connection.buffer[0];
+      if (connection.buffer.length >= 2) {
+        const secondByte = connection.buffer[1];
+        if ((firstByte & 0x07) === 0x00 && (firstByte >> 3) === 1 && secondByte >= 1 && secondByte <= 8) {
+          hasLengthPrefix = false;
+        }
       }
 
-      const messageData = connection.buffer.slice(4, 4 + length);
-      connection.buffer = connection.buffer.slice(4 + length);
+      if (hasLengthPrefix) {
+        length = connection.buffer.readUInt32BE(0);
+        this.logger.debug(`Message length prefix: ${length}, buffer available: ${connection.buffer.length}`);
+        
+        if (connection.buffer.length < 4 + length) {
+          this.logger.debug(`Waiting for more data, need ${4 + length} but have ${connection.buffer.length}`);
+          break;
+        }
+        messageData = connection.buffer.slice(4, 4 + length);
+        connection.buffer = connection.buffer.slice(4 + length);
+      } else {
+        this.logger.debug(`No length prefix detected, treating entire buffer as message (raw protobuf)`);
+        messageData = connection.buffer;
+        connection.buffer = Buffer.alloc(0);
+      }
 
       try {
         this.processMessage(connection, messageData);
       } catch (err) {
         this.logger.error(`Error processing message: ${err.message}`);
+        this.logger.error(`Stack trace: ${(err as Error).stack}`);
         this.sendError(connection, 1001, err.message);
       }
     }
   }
 
   private processMessage(connection: PluginConnection, data: Buffer) {
+    this.logger.debug(`Processing message: ${data.length} bytes, authenticated: ${connection.isAuthenticated}`);
+    
     let payload: Buffer;
 
     if (connection.isAuthenticated && connection.aesCipher) {
+      this.logger.debug('Decrypting message with AES');
       payload = CryptoUtil.decryptWithAES(
         connection.aesCipher.key,
         connection.aesCipher.iv,
         data,
       );
+      this.logger.debug(`Decrypted payload: ${payload.length} bytes`);
     } else {
+      this.logger.debug('Message is not encrypted (handshake phase)');
       payload = data;
     }
 
-    const message = this.protoService.decodeMessage(payload);
+    try {
+      const message = this.protoService.decodeMessage(payload);
+      this.logger.debug(`Decoded message type: ${message.type}, payload length: ${message.payload?.length || 0}`);
 
-    switch (message.type) {
-      case 'HANDSHAKE_REQUEST':
-        this.handleHandshake(connection, message);
-        break;
-      case 'PLUGIN_REQUEST':
-        this.handlePluginRequest(connection, message);
-        break;
-      case 'HEARTBEAT':
-        this.handleHeartbeat(connection, message);
-        break;
-      default:
-        this.logger.warn(`Unknown message type: ${message.type}`);
+      switch (message.type) {
+        case 'HANDSHAKE_REQUEST':
+          this.handleHandshake(connection, message);
+          break;
+        case 'PLUGIN_REQUEST':
+          this.handlePluginRequest(connection, message);
+          break;
+        case 'HEARTBEAT':
+          this.handleHeartbeat(connection, message);
+          break;
+        default:
+          this.logger.warn(`Unknown message type: ${message.type}`);
+          this.sendError(connection, 1003, `Unknown message type: ${message.type}`);
+      }
+    } catch (decodeErr) {
+      this.logger.error(`Failed to decode message: ${(decodeErr as Error).message}`);
+      this.logger.error(`Payload hex: ${payload.slice(0, 64).toString('hex')}...`);
+      this.sendError(connection, 1002, `Failed to decode message: ${(decodeErr as Error).message}`);
     }
   }
 
