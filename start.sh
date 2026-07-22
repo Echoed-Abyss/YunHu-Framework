@@ -77,6 +77,26 @@ fi
 echo ">>> 依赖安装完成 (耗时 ${INSTALL_DURATION}s)"
 echo ""
 
+# 修复可能缺失的依赖
+echo ">>> 检查并修复可能缺失的依赖..."
+
+# 检查后端 @nestjs/cli
+if [ ! -d "$BACKEND_DIR/node_modules/@nestjs/cli" ]; then
+    echo "  [后端] 修复 @nestjs/cli 依赖..."
+    cd "$BACKEND_DIR"
+    npm install @nestjs/cli --no-save --silent 2>&1 | tail -1
+fi
+
+# 检查前端 caniuse-lite
+if [ ! -d "$FRONTEND_DIR/node_modules/caniuse-lite" ]; then
+    echo "  [前端] 修复 caniuse-lite 依赖..."
+    cd "$FRONTEND_DIR"
+    npm install caniuse-lite --no-save --silent 2>&1 | tail -1
+fi
+
+echo ">>> 依赖修复完成"
+echo ""
+
 # 检查后端 .env 文件
 if [ ! -f "$BACKEND_DIR/.env" ]; then
     echo "[信息] 创建后端 .env 配置文件..."

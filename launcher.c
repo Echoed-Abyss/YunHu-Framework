@@ -1,7 +1,6 @@
 /**
  * yunhu-bot.exe - Windows 启动器
  * 无UI，并发安装后端和前端依赖，并发启动前端和后端
- * 通过调用 node launcher.js 实现
  */
 
 #include <windows.h>
@@ -44,17 +43,31 @@ void removePackageLock() {
     }
 }
 
-void fixRollupNative() {
-    char nativePath[MAX_PATH];
-    char win32Path[MAX_PATH];
-    snprintf(nativePath, MAX_PATH, "%s\\frontend\\node_modules\\rollup\\dist\\native.js", exeDir);
-    snprintf(win32Path, MAX_PATH, "%s\\frontend\\node_modules\\@rollup\\rollup-win32-x64-msvc", exeDir);
-
-    if (GetFileAttributesA(nativePath) != INVALID_FILE_ATTRIBUTES &&
-        GetFileAttributesA(win32Path) == INVALID_FILE_ATTRIBUTES) {
+void fixCrossPlatformModules() {
+    char path[MAX_PATH];
+    char cmd[MAX_CMD];
+    
+    // Fix frontend rollup
+    snprintf(path, MAX_PATH, "%s\\frontend\\node_modules\\@rollup\\rollup-win32-x64-msvc", exeDir);
+    if (GetFileAttributesA(path) == INVALID_FILE_ATTRIBUTES) {
         printf("  [FRONTEND] Fixing rollup cross-platform native module...\n");
-        char cmd[MAX_CMD];
         snprintf(cmd, MAX_CMD, "cd /d \"%s\\frontend\" && npm install @rollup/rollup-win32-x64-msvc --no-save --silent", exeDir);
+        system(cmd);
+    }
+    
+    // Fix frontend caniuse-lite
+    snprintf(path, MAX_PATH, "%s\\frontend\\node_modules\\caniuse-lite", exeDir);
+    if (GetFileAttributesA(path) == INVALID_FILE_ATTRIBUTES) {
+        printf("  [FRONTEND] Fixing caniuse-lite dependency...\n");
+        snprintf(cmd, MAX_CMD, "cd /d \"%s\\frontend\" && npm install caniuse-lite --no-save --silent", exeDir);
+        system(cmd);
+    }
+    
+    // Fix backend @nestjs/cli
+    snprintf(path, MAX_PATH, "%s\\backend\\node_modules\\@nestjs\\cli", exeDir);
+    if (GetFileAttributesA(path) == INVALID_FILE_ATTRIBUTES) {
+        printf("  [BACKEND] Fixing @nestjs/cli dependency...\n");
+        snprintf(cmd, MAX_CMD, "cd /d \"%s\\backend\" && npm install @nestjs/cli --no-save --silent", exeDir);
         system(cmd);
     }
 }
@@ -132,9 +145,9 @@ int main() {
     CloseHandle(threads[1]);
     printf("\n>>> Dependencies installed.\n\n");
 
-    /* Fix rollup cross-platform native module */
+    /* Fix cross-platform modules */
     printf(">>> Checking cross-platform native modules...\n");
-    fixRollupNative();
+    fixCrossPlatformModules();
     printf(">>> Native modules fixed.\n\n");
 
     /* Concurrent start */

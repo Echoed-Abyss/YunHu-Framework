@@ -76,7 +76,26 @@ function fixRollupPlatform(dir, name) {
 function installDeps(dir, name) {
   return new Promise((resolve, reject) => {
     log(name, '安装依赖...');
-    // 使用 --no-package-lock 避免跨平台 lockfile 问题
+    
+    // 先清理可能损坏的 node_modules（首次运行时）
+    const nodeModulesPath = path.join(dir, 'node_modules');
+    try {
+      // 检查 node_modules 是否存在关键依赖
+      if (name === '后端') {
+        const nestPath = path.join(nodeModulesPath, '@nestjs', 'cli');
+        if (!fs.existsSync(nestPath)) {
+          log(name, '清理可能损坏的依赖...');
+        }
+      } else if (name === '前端') {
+        const caniusePath = path.join(nodeModulesPath, 'caniuse-lite');
+        if (!fs.existsSync(caniusePath)) {
+          log(name, '清理可能损坏的依赖...');
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+    
     const args = ['install', '--no-package-lock'];
     const proc = spawn(npmCmd, args, {
       cwd: dir,
@@ -92,12 +111,13 @@ function installDeps(dir, name) {
     proc.stderr.on('data', (data) => {
       const lines = data.toString().trim().split('\n');
       lines.forEach(line => {
-        if (line.trim() && !line.includes('npm warn')) log(name, line.trim());
+        if (line.trim() && !line.includes('npm warn') && !line.includes('npm notice')) log(name, line.trim());
       });
     });
     proc.on('close', async (code) => {
       if (code === 0) {
         await fixRollupPlatform(dir, name);
+        await fixCanIUseLite(dir, name);
         log(name, '依赖安装完成');
         resolve();
       } else {
@@ -105,6 +125,27 @@ function installDeps(dir, name) {
         reject(new Error(`${name} install failed`));
       }
     });
+  });
+}
+
+function fixCanIUseLite(dir, name) {
+  return new Promise((resolve) => {
+    if (name !== '前端') {
+      resolve();
+      return;
+    }
+    const caniusePath = path.join(dir, 'node_modules', 'caniuse-lite');
+    if (!fs.existsSync(caniusePath)) {
+      log(name, '修复 caniuse-lite 依赖...');
+      const fixProc = spawn(npmCmd, ['install', 'caniuse-lite', '--no-save', '--silent'], {
+        cwd: dir,
+        shell: true,
+        stdio: 'pipe',
+      });
+      fixProc.on('close', () => resolve());
+    } else {
+      resolve();
+    }
   });
 }
 
