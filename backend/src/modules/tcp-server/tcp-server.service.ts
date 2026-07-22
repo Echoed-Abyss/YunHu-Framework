@@ -76,6 +76,7 @@ export class TcpServerService implements OnModuleInit, OnModuleDestroy {
       sessionId,
       isAuthenticated: false,
       aesCipher: null,
+      useZeroIv: false,
       subscribedEvents: [],
       connectedAt: Date.now(),
       lastHeartbeatAt: Date.now(),
@@ -150,11 +151,20 @@ export class TcpServerService implements OnModuleInit, OnModuleDestroy {
 
     if (connection.isAuthenticated && connection.aesCipher) {
       this.logger.debug('Decrypting message with AES');
-      payload = CryptoUtil.decryptWithAES(
-        connection.aesCipher.key,
-        connection.aesCipher.iv,
-        data,
-      );
+      try {
+        if (connection.useZeroIv) {
+          const zeroIv = Buffer.alloc(16, 0);
+          payload = CryptoUtil.decryptWithAES(connection.aesCipher.key, zeroIv, data);
+        } else {
+          payload = CryptoUtil.decryptWithAES(connection.aesCipher.key, connection.aesCipher.iv, data);
+        }
+      } catch (err) {
+        this.logger.debug(`AES decrypt with actual IV failed, trying zero IV: ${err.message}`);
+        const zeroIv = Buffer.alloc(16, 0);
+        payload = CryptoUtil.decryptWithAES(connection.aesCipher.key, zeroIv, data);
+        connection.useZeroIv = true;
+        this.logger.log(`Plugin ${connection.pluginId} switched to zero-IV AES mode`);
+      }
       this.logger.debug(`Decrypted payload: ${payload.length} bytes`);
     } else {
       this.logger.debug('Message is not encrypted (handshake phase)');
@@ -385,9 +395,10 @@ export class TcpServerService implements OnModuleInit, OnModuleDestroy {
 
   private sendMessage(connection: PluginConnection, message: Buffer) {
     if (connection.isAuthenticated && connection.aesCipher) {
+      const iv = connection.useZeroIv ? Buffer.alloc(16, 0) : connection.aesCipher.iv;
       const encrypted = CryptoUtil.encryptWithAES(
         connection.aesCipher.key,
-        connection.aesCipher.iv,
+        iv,
         message,
       );
       this.sendRawMessage(connection, encrypted);

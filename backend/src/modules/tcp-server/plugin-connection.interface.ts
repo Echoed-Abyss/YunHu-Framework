@@ -10,6 +10,7 @@ export interface PluginConnection {
   sessionId: string;
   isAuthenticated: boolean;
   aesCipher: AESCipher | null;
+  useZeroIv: boolean;
   subscribedEvents: string[];
   connectedAt: number;
   lastHeartbeatAt: number;
