@@ -51,9 +51,26 @@ export class ProtoService implements OnModuleInit {
   }
 
   encodeMessage(payload: any): Buffer {
-    const errMsg = this.messageType.verify(payload);
+    const typeMap: Record<string, number> = {
+      UNKNOWN: 0,
+      HANDSHAKE_REQUEST: 1,
+      HANDSHAKE_RESPONSE: 2,
+      PLUGIN_REQUEST: 3,
+      PLUGIN_RESPONSE: 4,
+      EVENT_PUSH: 5,
+      HEARTBEAT: 6,
+      HEARTBEAT_ACK: 7,
+      ERROR: 8,
+    };
+    
+    const normalized = { ...payload };
+    if (typeof normalized.type === 'string' && typeMap[normalized.type] !== undefined) {
+      normalized.type = typeMap[normalized.type];
+    }
+    
+    const errMsg = this.messageType.verify(normalized);
     if (errMsg) throw new Error(errMsg);
-    const message = this.messageType.create(payload);
+    const message = this.messageType.create(normalized);
     const buffer = this.messageType.encode(message).finish();
     return Buffer.from(buffer);
   }

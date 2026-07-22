@@ -45,14 +45,28 @@ export class CryptoUtil {
   }
 
   static decryptWithRSA(privateKeyPem: string, encryptedData: Buffer): Buffer {
-    return crypto.privateDecrypt(
-      {
-        key: privateKeyPem,
-        padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
-        oaepHash: 'sha256',
-      },
-      encryptedData,
-    );
+    try {
+      return crypto.privateDecrypt(
+        {
+          key: privateKeyPem,
+          padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+          oaepHash: 'sha256',
+        },
+        encryptedData,
+      );
+    } catch (oaepErr) {
+      try {
+        return crypto.privateDecrypt(
+          {
+            key: privateKeyPem,
+            padding: crypto.constants.RSA_PKCS1_PADDING,
+          },
+          encryptedData,
+        );
+      } catch (pkcsErr) {
+        throw new Error(`RSA decrypt failed: OAEP: ${(oaepErr as Error).message}, PKCS1: ${(pkcsErr as Error).message}`);
+      }
+    }
   }
 
   static encryptWithAES(key: Buffer, iv: Buffer, plaintext: Buffer): Buffer {
